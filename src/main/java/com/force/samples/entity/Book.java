@@ -17,7 +17,7 @@ public class Book {
 	
 	private String title;
 	
-	@ManyToOne(cascade={CascadeType.PERSIST})
+	@ManyToOne //(cascade={CascadeType.PERSIST})
 	private Author author;
 	
 	private Date publicationDate;

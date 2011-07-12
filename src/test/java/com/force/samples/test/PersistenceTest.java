@@ -1,7 +1,9 @@
 package com.force.samples.test;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -26,8 +28,9 @@ public class PersistenceTest {
 	@BeforeClass
 	public static void testClassSetup() {
 		log = LoggerFactory.getLogger(PersistenceTest.class);
-		
 		log.warn("Be sure to create the schema before running these tests!");
+        cleanTable("Book");
+        cleanTable("Author");
 	}
 
 	@Test
@@ -35,7 +38,6 @@ public class PersistenceTest {
 		log.info("Running testDatabaseSaveAndRetrieve");
 		
 		EntityManagerFactory emf = Persistence.createEntityManagerFactory("exampleHibernateJPA");
-		
 		EntityManager em = emf.createEntityManager();
 		
 		log.info("Creating and persisting entity...");
@@ -46,12 +48,14 @@ public class PersistenceTest {
 		author.setFirstName("JRR");
 		author.setLastName("Tolkein");
 
-		Book book = new Book();
-		book.setAuthor(author);
-		book.setTitle("Fellowship of the Ring");
-		book.setPublicationDate(new GregorianCalendar(1954, 06, 24).getTime());
-		
-		em.persist(book);
+		Book firstBook = newBook(author, "Fellowship of the Ring");
+        Book secondBook = newBook(author, "The Hobbit");
+
+        em.persist(firstBook);
+        em.persist(secondBook);
+
+        author.setBooks(listOf(firstBook, secondBook));
+        em.persist(author);
 		
 		tx.commit();
 		
@@ -59,23 +63,34 @@ public class PersistenceTest {
 		log.info("Reading back from database and verifying...");
 		EntityTransaction readTx = em.getTransaction();
 		readTx.begin();
-		
-		Book fellowship = em.find(Book.class, book.getId());
-		Assert.assertNotNull(fellowship);
-		Assert.assertEquals("Fellowship of the Ring", fellowship.getTitle());
-		Assert.assertEquals("JRR", fellowship.getAuthor().getFirstName());
-		Assert.assertEquals("Tolkein", fellowship.getAuthor().getLastName());
-		
+//        author = em.find(Author.class, author.getId());
+		firstBook.setTitle("Not the Hobbit");
+        em.merge(author);
 		readTx.commit();
-		
-		// Cleanup the entities
-		log.info("Cleaning up created entity...");
-		EntityTransaction delTx = em.getTransaction();
-		delTx.begin();
-		
-		em.remove(fellowship);
-		em.remove(fellowship.getAuthor());
-		
-		delTx.commit();
 	}
+
+    private Book newBook(Author author, String title) {
+        Book book = new Book();
+        book.setAuthor(author);
+        book.setTitle(title);
+        book.setPublicationDate(new GregorianCalendar(2011, 11, 15).getTime());
+        return book;
+    }
+
+    private List<Book> listOf(Book... books) {
+        List<Book> bookList = new ArrayList<Book>();
+        for (Book b : books)
+            bookList.add(b);
+        return bookList;
+    }
+
+    private static void cleanTable(String tableName) {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("exampleHibernateJPA");
+        EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+        em.createQuery("Delete From " + tableName).executeUpdate();
+        em.getTransaction().commit();
+        Long countRow = (Long)em.createQuery("Select count(x) From " + tableName + " x").getSingleResult();
+        Assert.assertEquals((Long)0L, countRow);
+    }
 }

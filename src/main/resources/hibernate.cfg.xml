@@ -10,6 +10,7 @@
 		<property name="hibernate.connection.username">devdbuser</property>
 		<property name="hibernate.connection.password">postgres</property>
 		<property name="hibernate.show_sql">true</property>
+        <property name="hbm2ddl.auto">create</property>
 	</session-factory>
 </hibernate-configuration>
 
