@@ -67,6 +67,9 @@ public class PersistenceTest {
 		firstBook.setTitle("Not the Hobbit");
         em.merge(author);
 		readTx.commit();
+
+        Book notTheHobbit = em.find(Book.class, firstBook.getId());
+        Assert.assertEquals("Not the Hobbit", notTheHobbit.getTitle());
 	}
 
     private Book newBook(Author author, String title) {
