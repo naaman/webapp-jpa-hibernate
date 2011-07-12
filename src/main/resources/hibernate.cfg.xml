@@ -11,6 +11,7 @@
 		<property name="hibernate.connection.password">postgres</property>
 		<property name="hibernate.show_sql">true</property>
         <property name="hbm2ddl.auto">create</property>
+        <property name="hibernate.max_fetch_depth">5</property>
 	</session-factory>
 </hibernate-configuration>
 
